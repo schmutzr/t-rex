@@ -5,7 +5,9 @@ PATH_SEP = "" # seperate nodes, ie "/" for directory nodes verbatim, "" for per-
 INFIX_SEP = "  /  " # seperate prefix (path) from suffix (file/resource) part on output, empty if PATH_SEP not empty
 
 class T_rex
-  attr_reader :node
+  attr_reader :node # for <=>
+  attr_writer :terminal # for add_child, ugly, needs fix
+
   def initialize(node = nil)
     @children = Hash.new
     @terminal = false
@@ -19,20 +21,16 @@ class T_rex
     if node_name == @node
       return true if path_a.empty?
       if @children.member? path_a.first
-        child = @children[path_a.first]
-        return child.member? path_a
-      else
-        return false
+        return @children[path_a.first].member? path_a
       end
-    else
-      return false
     end
+    return false
   end
 
   def add_child(path)
+    self if self.member? path
     path_a = self.tokenize path
     child_name = path_a.shift
-    puts "T_rex.add_child(#{path}): child_name=#{child_name}, tokenize=#{path_a.join(",")}"
     if @children.member?(child_name)
       child = @children[child_name]
     else
@@ -40,10 +38,9 @@ class T_rex
       @children[child_name] = child
     end
     if path_a.empty?
-      @terminal = true
-      puts "\tterminal"
+      child.terminal = true # this is slighly ugly (ie, via accessor)
     else
-      child.add_child(path_a.join(PATH_SEP))
+      child.add_child path_a.join(PATH_SEP) # re-join might also seem a bit ugly :)
     end
     self
   end
@@ -51,30 +48,29 @@ class T_rex
   def traverse
     result = @node
     if not @children.empty?
-      subtree_result_a = @children.values.sort.collect{|c| c.traverse}
-      if subtree_result_a.length > 1
-        subtree_result = "(#{subtree_result_a.join("|").gsub(/[\n\r]/,"")})"
+      subtree = @children.values.sort.collect { |c| c.traverse } 
+      if subtree.length==1 and not @terminal
+        result = "#{@node}#{subtree.first}"
       else
-        subtree_result = subtree_result_a.first
-      end
-      if @terminal
-        result = "(#{@node}|#{@node}#{PATH_SEP}#{subtree_result})"
-      else
-        result = "#{@node}#{PATH_SEP}#{subtree_result}"
+        result = "#{@node}(#{subtree.join("|")})#{"?" if @terminal}"
       end
     end
     return result
+  end
+
+  def dot
+    puts "#{self.object_id} [label=\"#{@node}\"#{",style=\"filled\"" if @terminal}];"
+    @children.values.sort.each { |c| puts "#{self.object_id} -> #{c.object_id};"; c.dot } if not @children.empty?
   end
 
   def <=>(b)
     @node <=> b.node
   end
 
-  def tokenize(path)
+  def tokenize(path) # not exactly, take lines including metacharacters verbatim (ie, no further subdivision)
     path_a = Array.new
     if /\.[\*\?]/.match path
       path_a[0] = path
-      puts "tokenize: take #{path} verbatim"
     else
       path_a = path.split(PATH_SEP)
     end

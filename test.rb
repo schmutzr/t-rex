@@ -14,35 +14,36 @@ ARGF.each_line do |line|
   test_suffix << line.chomp
 end
 
-prefix = T_rex.new(test_prefix.first)
+prefix = T_rex.new()
 
 test_prefix.each do |line|
-   break if /^$/.match line
    new_node = line.chomp # .sub(/^\//,"")
-   puts "add: #{new_node}"
-   prefix.add_child(new_node) if not prefix.member? new_node
+   prefix.add_child(new_node)
 end
 
-suffix = T_rex.new(test_suffix.first)
+suffix = T_rex.new()
 
 test_suffix.each do |line|
    suffix.add_child(line.chomp.sub(/^\//,""))
 end
 
-puts "re: #{prefix.traverse}/?#{suffix.traverse}"
-re =  Regexp.new "#{prefix.traverse}/?#{suffix.traverse}"
-puts ""
-#exit 0
+re_t = "#{prefix.traverse}/?#{suffix.traverse}"
+
+#puts "re: #{re_t}"
+#re =  Regexp.new re_t
+#puts ""
 #
 #test_prefix.each do |p|
 #  test_suffix.each do |s|
 #    test_string = "#{p}/#{s}".gsub(/\.\*/,"X")
 #    if re.match test_string
-#      puts "ok"
+#      puts "ok  : #{test_string}"
 #    else
 #      puts "fail: #{test_string}"
 #    end
 #  end
 #end
-#
-#
+
+puts "digraph {"
+prefix.dot
+puts "}"
