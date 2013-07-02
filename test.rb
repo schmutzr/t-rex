@@ -45,5 +45,7 @@ re_t = "#{prefix.traverse}/?#{suffix.traverse}"
 #end
 
 puts "digraph {"
+puts "edge [arrowtail=\"none\",arrowhead=\"none\"];"
+puts "node [shape=\"box\",style=\"rounded\"];"
 prefix.dot
 puts "}"

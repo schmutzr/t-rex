@@ -58,9 +58,10 @@ class T_rex
     return result
   end
 
-  def dot
-    puts "#{self.object_id} [label=\"#{@node}\"#{",style=\"filled\"" if @terminal}];"
-    @children.values.sort.each { |c| puts "#{self.object_id} -> #{c.object_id};"; c.dot } if not @children.empty?
+  def dot(path=nil)
+    path="#{path}#{@node}"
+    puts "#{self.object_id} [label=\"#{(@terminal) ? path : @node}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}];"
+    @children.values.sort.each { |c| puts "#{self.object_id} -> #{c.object_id};"; c.dot(path) } if not @children.empty?
   end
 
   def <=>(b)
