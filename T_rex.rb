@@ -12,7 +12,7 @@ class T_rex
     @children = Hash.new
     @terminal = false
     @node     = node
-    self
+    return self
   end
 
   def member?(path)
@@ -28,27 +28,23 @@ class T_rex
   end
 
   def add_child(path)
-    self if self.member? path
+    return self if self.member? path
     path_a = self.tokenize path
     child_name = path_a.shift
-    if @children.member?(child_name)
-      child = @children[child_name]
-    else
-      child = T_rex.new(child_name)
-      @children[child_name] = child
-    end
+    @children[child_name] = T_rex.new(child_name) if not @children.member?(child_name)
+    child = @children[child_name]
     if path_a.empty?
       child.terminal = true # this is slighly ugly (ie, via accessor)
     else
       child.add_child path_a.join(PATH_SEP) # re-join might also seem a bit ugly :)
     end
-    self
+    return self
   end
 
-  def traverse
+  def make_re
     result = @node
     if not @children.empty?
-      subtree = @children.values.sort.collect { |c| c.traverse } 
+      subtree = @children.values.sort.collect { |child| child.make_re } 
       if subtree.length==1 and not @terminal
         result = "#{@node}#{subtree.first}"
       else
