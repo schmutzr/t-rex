@@ -54,10 +54,11 @@ class T_rex
     return result
   end
 
-  def dot(path=nil)
+  def make_dot(path=nil)
     path="#{path}#{@node}"
-    puts "#{self.object_id} [label=\"#{(@terminal) ? path : @node}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}];"
-    @children.values.sort.each { |c| puts "#{self.object_id} -> #{c.object_id};"; c.dot(path) } if not @children.empty?
+    subtree_dot = @children.values.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.make_dot(path)}" ] } if not @children.empty? 
+    node_dot    = "#{self.object_id} [label=\"#{(@terminal) ? path : @node}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}]"
+    return [ node_dot, subtree_dot ].compact.flatten.join(";\n")
   end
 
   def <=>(b)

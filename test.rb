@@ -27,7 +27,7 @@ test_suffix.each do |line|
    suffix.add_child(line.chomp.sub(/^\//,""))
 end
 
-re_t = "#{prefix.traverse}/?#{suffix.traverse}"
+re_t = "#{prefix.make_re}/?#{suffix.make_re}"
 
 #puts "re: #{re_t}"
 #re =  Regexp.new re_t
@@ -47,5 +47,5 @@ re_t = "#{prefix.traverse}/?#{suffix.traverse}"
 puts "digraph {"
 puts "edge [arrowtail=\"none\",arrowhead=\"none\"];"
 puts "node [shape=\"box\",style=\"rounded\"];"
-prefix.dot
+puts prefix.make_dot
 puts "}"
