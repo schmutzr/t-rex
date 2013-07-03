@@ -4,94 +4,113 @@
 PATH_SEP = "" # seperate nodes, ie "/" for directory nodes verbatim, "" for per-character nodes (more efficient, less readable)
 INFIX_SEP = "  /  " # seperate prefix (path) from suffix (file/resource) part on output, empty if PATH_SEP not empty
 
+#
+# MONKEY PATCH STUFF
+# FIXME: need namespace-containment
 class Array
-  def comparator(b) # compares self + b element wise, returns array of arrays: [ matching_elements, rest_elements_of_b ]
-    # non-lispy style this time...
-    split_index = ( self.zip(b).take_while { |pair| pair[0]==pair[1] } ).length
-    return [b[0..(split_index-1)], b[split_index..-1]]
-  end
+   def tr_comparator(b) # compares self + b element wise, returns array of arrays: [ matching_elements, rest_elements_of_b ]
+      # non-lispy style this time...
+      split_index = ( self.zip(b).take_while { |pair| pair[0]==pair[1] } ).length
+      return [b[0..(split_index-1)], b[split_index..-1]]
+   end
+end
+
+class String
+   def tr_tokenize # not exactly, take lines including metacharacters verbatim (ie, no further subdivision)
+      if /\.[\*\?]/.match self
+	 return [ self ]
+      else
+	 return self.split(PATH_SEP)
+      end
+   end
+end
+
+
+#
+#
+# T_rex (roar!)
+#
+#
+# this version uses token-arrays instead if simple (one-character) string as node-names/content
+# - enabling acceptable tree-compression on add
+# - more general tokenize handling (all in String#tr_tokenize)
+
+def debug(stuff)
+   puts "DEBUG: #{stuff}"
 end
 
 class T_rex
-  attr_reader :node # for <=>
-  attr_writer :terminal # for add_child, ugly, needs fix
+   attr_reader :node # for <=>
+   attr_writer :terminal # for add_child, ugly, needs fix
 
-  def initialize(node = nil)
-    @children = Hash.new
-    @terminal = false
-    @node     = node
-    return self
-  end
+   def initialize(node = Array.new, children = Hash.new)
+      @children = children
+      @terminal = ( not node.nil? ) and children.empty?
+      @node     = (node.kind_of? String) ? node.split() : node
+      debug "T_rex::initialize([#{@node.join}], [#{@children.join(",") if !@children.empty?}])"
+      return self
+   end
 
-  def member?(path)
-    path_a = self.tokenize path
-    node_name = path_a.shift
-    if node_name == @node
-      return true if path_a.empty?
-      if @children.member? path_a.first
-        return @children[path_a.first].member? path_a
+   def member?(path)
+      return false
+   end
+
+   def add_child(path)
+      # return self if self.member? path
+
+      path = path.tr_tokenize if path.kind_of? String
+      (match, rest) = @node.empty? ? [ [], path ] : ( @node.tr_comparator path)
+      debug "T_rex::add_child: node=[#{@node.join}], match=[#{match.join}], rest=[#{rest.join}]"
+      case true
+	 when ( match.empty? and rest.empty? )      # terminate recursion
+	    debug "T_rex::add_child: return self"	
+	    @terminal = true
+	 when ( !rest.empty? and ( @node == match or @node.empty? )) # add child, check for (partially) matching children, delegate
+	    best_matching_child = @children.values.collect do |child|
+	       child_match_length = (child.node.tr_comparator rest)[0].length
+	       debug "  best_matching_child: #{child_match_length}\tnew: #{rest.join}\tmatches: #{child.node.join}"
+	       [ child, child_match_length ] if child_match_length > 0
+	    end
+	    if best_matching_child.empty?
+	       debug "T_rex::add_child: CREATE CHILD = [#{rest.join}]"
+	       @children[rest.join] = T_rex.new rest
+	    else
+	       best_matching_child = (best_matching_child.sort {|a,b| a[1]<=>b[1]})[-1][0]
+	       debug "T_rex::add_child: UPDATE CHILD [#{best_matching_child.node.join}] <- [#{rest.join}]"
+	       best_matching_child.add_child rest
+	    end
+	 when @node.length > match.length           # split
+	    # debug "T_rex::add_child: split"
+	    # "clone" this node with non-matching path
+	    @children = [ T_rex.new(@node[match.length..-1], @children), T_rex.new(@rest) ]
+	 else debug "T_rex::add_child: return self (fall-through)"
       end
-    end
-    return false
-  end
 
-  def add_child(path)
-    return self if self.member? path
+      return self
+   end
 
-    if not @node.nil?
-      (match, rest) = tokenize(@node).comparator tokenize(path)
-      case
-        when match.empty?                                then puts "new" # completely new node
-        when match == @node && !rest.empty?              then puts "add" # add new child with rest
-        when match.length < @node.length && !rest.empty? then puts "split" # split self node
+   def make_re
+      result = ""
+      if not @children.empty?
+	 subtree = @children.values.sort.collect { |child| child.make_re } 
+	 if subtree.length==1 and not @terminal
+	    result = "#{subtree.first}"
+	 else
+	    result = "(#{subtree.join("|")})#{"?" if @terminal}"
+	 end
       end
-    else
-      puts "at root, add" # add
-    end
+      return "#{@node.join if not @node.nil?}#{result}"
+   end
 
-    path_a = self.tokenize path
-    child_name = path_a.shift
-    @children[child_name] = T_rex.new(child_name) if not @children.member?(child_name)
-    child = @children[child_name]
-    if path_a.empty?
-      child.terminal = true # this is slighly ugly (ie, via accessor)
-    else
-      child.add_child path_a.join(PATH_SEP) # re-join might also seem a bit ugly :)
-    end
-    return self
-  end
+   def make_dot(path=nil)
+      path="#{path}#{@node.join if not @node.nil?}"
+      subtree_dot = @children.values.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.make_dot(path)}" ] } if not @children.empty? 
+      node_dot    = "#{self.object_id} [label=\"#{(@terminal) ? path : ((@node.nil?) ? "" : @node.join)}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}]"
+      return [ node_dot, subtree_dot ].compact.flatten.join(";\n")
+   end
 
-  def make_re
-    result = @node
-    if not @children.empty?
-      subtree = @children.values.sort.collect { |child| child.make_re } 
-      if subtree.length==1 and not @terminal
-        result = "#{@node}#{subtree.first}"
-      else
-        result = "#{@node}(#{subtree.join("|")})#{"?" if @terminal}"
-      end
-    end
-    return result
-  end
+   def <=>(b)
+      @node <=> b.node
+   end
 
-  def make_dot(path=nil)
-    path="#{path}#{@node}"
-    subtree_dot = @children.values.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.make_dot(path)}" ] } if not @children.empty? 
-    node_dot    = "#{self.object_id} [label=\"#{(@terminal) ? path : @node}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}]"
-    return [ node_dot, subtree_dot ].compact.flatten.join(";\n")
-  end
-
-  def <=>(b)
-    @node <=> b.node
-  end
-
-  def tokenize(path) # not exactly, take lines including metacharacters verbatim (ie, no further subdivision)
-    path_a = Array.new
-    if /\.[\*\?]/.match path
-      path_a[0] = path
-    else
-      path_a = path.split(PATH_SEP)
-    end
-    return path_a
-  end
 end
