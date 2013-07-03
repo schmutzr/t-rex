@@ -4,6 +4,14 @@
 PATH_SEP = "" # seperate nodes, ie "/" for directory nodes verbatim, "" for per-character nodes (more efficient, less readable)
 INFIX_SEP = "  /  " # seperate prefix (path) from suffix (file/resource) part on output, empty if PATH_SEP not empty
 
+class Array
+  def comparator(b) # compares self + b element wise, returns array of arrays: [ matching_elements, rest_elements_of_b ]
+    # non-lispy style this time...
+    split_index = ( self.zip(b).take_while { |pair| pair[0]==pair[1] } ).length
+    return [b[0..(split_index-1)], b[split_index..-1]]
+  end
+end
+
 class T_rex
   attr_reader :node # for <=>
   attr_writer :terminal # for add_child, ugly, needs fix
