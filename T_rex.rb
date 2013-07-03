@@ -37,6 +37,18 @@ class T_rex
 
   def add_child(path)
     return self if self.member? path
+
+    if not @node.nil?
+      (match, rest) = tokenize(@node).comparator tokenize(path)
+      case
+        when match.empty?                                then puts "new" # completely new node
+        when match == @node && !rest.empty?              then puts "add" # add new child with rest
+        when match.length < @node.length && !rest.empty? then puts "split" # split self node
+      end
+    else
+      puts "at root, add" # add
+    end
+
     path_a = self.tokenize path
     child_name = path_a.shift
     @children[child_name] = T_rex.new(child_name) if not @children.member?(child_name)
