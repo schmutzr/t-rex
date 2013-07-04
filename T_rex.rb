@@ -11,6 +11,8 @@ class Array
    def tr_comparator(b) # compares self + b element wise, returns array of arrays: [ matching_elements, rest_elements_of_b ]
       # non-lispy style this time...
       split_index = ( self.zip(b).take_while { |pair| pair[0]==pair[1] } ).length
+      debug "      tr_comparator: \"#{self.join}\"=?\"#{b.join}\" -> [#{b[0..(split_index-1)]}], [#{b[split_index..-1]}]"
+      return [ [], b ] if split_index == 0
       return [b[0..(split_index-1)], b[split_index..-1]]
    end
 end
@@ -59,23 +61,25 @@ class T_rex
       # return self if self.member? path
 
       path = path.tr_tokenize if path.kind_of? String
-      (match, rest) = @node.empty? ? [ [], path ] : ( @node.tr_comparator path)
+      (match, rest) = @node.empty? ? [ [], path ] : @node.tr_comparator(path)
       debug "T_rex::add_child: node=[#{@node.join}], match=[#{match.join}], rest=[#{rest.join}]"
       case true
 	 when ( match.empty? and rest.empty? )      # terminate recursion
 	    debug "T_rex::add_child: return self"	
 	    @terminal = true
 	 when ( !rest.empty? and ( @node == match or @node.empty? )) # add child, check for (partially) matching children, delegate
-	    best_matching_child = @children.values.collect do |child|
-	       child_match_length = (child.node.tr_comparator rest)[0].length
-	       debug "  best_matching_child: #{child_match_length}\tnew: #{rest.join}\tmatches: #{child.node.join}"
+	    best_matching_child_candidates = @children.values.collect do |child|
+               (m, r) = child.node.tr_comparator rest
+	       child_match_length = m.length
+               debug "   T_rex::add_child: check child [#{child.node.join}] against [#{rest.join}] match: [#{m.join}] length: #{m.length}"
 	       [ child, child_match_length ] if child_match_length > 0
 	    end
-	    if best_matching_child.empty?
+	    if best_matching_child_candidates.empty?
 	       debug "T_rex::add_child: CREATE CHILD = [#{rest.join}]"
 	       @children[rest.join] = T_rex.new rest
 	    else
-	       best_matching_child = (best_matching_child.sort {|a,b| a[1]<=>b[1]})[-1][0]
+               debug "T_rex::add_child: UPD #{(best_matching_child_candidates.each {|pair| "#{pair[0].node.join}=#{pair[1]}"}).join(",")}"
+	       best_matching_child = (best_matching_child_candidates.sort {|a,b| a[1]<=>b[1]})[-1][0]
 	       debug "T_rex::add_child: UPDATE CHILD [#{best_matching_child.node.join}] <- [#{rest.join}]"
 	       best_matching_child.add_child rest
 	    end
