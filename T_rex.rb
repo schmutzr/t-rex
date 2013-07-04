@@ -42,6 +42,7 @@ end
 # - more general tokenize handling (all in String#tr_tokenize)
 
 def debug(stuff)
+   true or  
    puts "DEBUG: #{stuff}"
 end
 
@@ -101,6 +102,7 @@ class T_rex
 	    split_child_path = @node[match.length..-1]
 	    new_children = [ T_rex.new(split_child_path, @children), T_rex.new(rest) ] # slighly confusing... this node has only two children, the first one inherits all our previous children
 	    @node = @node[0..(match.length-1)]
+	    @children = new_children
 	 else debug "T_rex::add_child: return self (fall-through)"
       end
 
@@ -121,10 +123,12 @@ class T_rex
    end
 
    def make_dot(path=nil)
+      prefix = path.nil? ? [ "digraph {", "edge [arrowtail=\"none\",arrowhead=\"none\"]", "node [shape=\"box\",style=\"rounded\"]" ] : nil
+      suffix = path.nil? ? "}" : nil
       path="#{path}#{@node.join if not @node.nil?}"
       subtree_dot = @children.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.make_dot(path)}" ] } if not @children.empty? 
       node_dot    = "#{self.object_id} [label=\"#{(@terminal) ? path : ((@node.nil?) ? "" : @node.join)}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}]"
-      return [ node_dot, subtree_dot ].compact.flatten.join(";\n")
+      return ([ prefix, node_dot, subtree_dot, suffix ].compact.flatten.reject {|r| /^$/.match r}).join(";\n")
    end
 
    def <=>(b)

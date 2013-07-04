@@ -44,8 +44,4 @@ re_t = "#{prefix.make_re}/?#{suffix.make_re}"
 #  end
 #end
 
-puts "digraph {"
-puts "edge [arrowtail=\"none\",arrowhead=\"none\"];"
-puts "node [shape=\"box\",style=\"rounded\"];"
 puts prefix.make_dot
-puts "}"
