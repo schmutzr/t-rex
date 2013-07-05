@@ -27,11 +27,11 @@ test_suffix.each do |line|
    suffix.add_child(line.chomp.sub(/^\//,""))
 end
 
-re_t = "#{prefix.make_re}/?#{suffix.make_re}"
+re_t = "#{prefix.to_re}/?#{suffix.to_re}"
 
-puts "re: #{re_t}"
-re =  Regexp.new re_t
-puts ""
+#puts "re: #{re_t}"
+#re =  Regexp.new re_t
+#puts ""
 
 #test_prefix.each do |p|
 #  test_suffix.each do |s|
@@ -44,4 +44,4 @@ puts ""
 #  end
 #end
 
-#puts prefix.make_dot
+puts prefix.to_dot

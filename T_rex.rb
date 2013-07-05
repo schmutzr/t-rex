@@ -40,18 +40,17 @@ end
 # - more general tokenize handling (all in String#tr_tokenize)
 
 def debug(stuff)
-   true or  
    puts "DEBUG: #{stuff}"
 end
 
 class T_rex
    attr_reader :node # for <=>
-   attr_writer :terminal # for add_child, ugly, needs fix
+   attr_writer :terminal # ugly, probably the default for compacted-tree mode
 
    def initialize(node = Array.new, children = Array.new)
       @children = children
       @terminal = false   # ( not node.nil? ) and children.empty?
-      @node     = (node.kind_of? String) ? node.split() : node
+      @node     = (node.kind_of? String) ? node.tr_tokenize : node
       return self
    end
 
@@ -61,7 +60,8 @@ class T_rex
 
    def lookup(path)
       path = path.tr_tokenize if path.kind_of? String
-      (match, rest) = (@node.empty? && !path.empty) ? [[], path] : @node.tr_comparator(path)
+      debug "lookup(\"#{path.join}\") : @node=#{@node.inspect}"
+      (match, rest) = (@node.empty? && !path.empty?) ? [[], path] : @node.tr_comparator(path)
       if match==@node
 	 if rest.empty?
 	    return self # found
@@ -73,7 +73,6 @@ class T_rex
       return false
    end
 
-private
    def find_best_child(rest)
       candidates = []
       if not @children.empty?
@@ -92,8 +91,6 @@ private
       return best_matching_child
    end
 
-public
-
    def add_child(path)
       # return self if self.member? path
       path = path.tr_tokenize if path.kind_of? String
@@ -103,42 +100,36 @@ public
          # terminate recursion
 	    @terminal = true
 	 when ( !rest.empty? and ( @node == match or @node.empty? ))
-         # add child, check for (partially) matching children, delegate
-	    if @children.empty?
-	       candidates = []
+	    # add child, check for (partially) matching children, delegate
+	    best_matching_child = find_best_child(rest)
+	    if best_matching_child.nil?
+	       # NEW: no match of rest among children -> new child
+	       @children << (best_matching_child = T_rex.new(rest))
+	       best_matching_child.terminal = true
 	    else
-	       candidates = @children.collect do |child|
-		  (m, r) = child.node.tr_comparator rest
-		  child_match_length = m.length
-		  [ child, child_match_length ] if child_match_length > 0
-	       end
-	    end
-	    candidates.compact!
-	    if not candidates.empty?
-               # DELEGATE: find longest (element/character wise) match of rest among children
-	       best_matching_child = (candidates.sort {|a,b| a[1]<=>b[1]})[-1][0]
-	       best_matching_child.add_child rest
-	    else
-               # NEW: no match of rest among children -> new child
-	       @children << T_rex.new(rest)
+	       # DELEGATE:
+	       best_matching_child.add_child(rest)
 	    end
 	 when @node.length > match.length
          # SPLIT: split current node, one child inherits all current children, the other equals rest (with no children)
 	    # "clone" this node with non-matching path
-	    split_child_path = @node[match.length..-1]
-	    new_children = [ T_rex.new(split_child_path, @children), T_rex.new(rest) ] # slighly confusing... this node has only two children, the first one inherits all our previous children
+	    split_child = T_rex.new(@node[match.length..-1], @children)
+	    split_child.terminal = @terminal
+	    new_child   = T_rex.new(rest)
+	    new_child.terminal = true
+	    new_children = [ split_child, new_child ] # slighly confusing... this node has only two children, the first one inherits all our previous children
 	    @node = @node[0..(match.length-1)]
 	    @children = new_children
+	    @terminal = false # can't be terminal immediately after splitting
 	 else debug "T_rex::add_child: return self (fall-through)"
       end
-
       return self
    end
 
-   def make_re
+   def to_re
       result = ""
       if not @children.empty?
-	 subtree = @children.collect { |child| child.make_re } 
+	 subtree = @children.collect { |child| child.to_re } 
 	 if subtree.length==1 and not @terminal
 	    result = "#{subtree.first}"
 	 else
@@ -148,12 +139,12 @@ public
       return "#{@node.join if not @node.nil?}#{result}"
    end
 
-   def make_dot(path=nil)
+   def to_dot(path=nil)
       prefix = path.nil? ? [ "digraph {", "edge [arrowtail=\"none\",arrowhead=\"none\"]", "node [shape=\"box\",style=\"rounded\"]" ] : nil
       suffix = path.nil? ? "}" : nil
       path="#{path}#{@node.join if not @node.nil?}"
-      subtree_dot = @children.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.make_dot(path)}" ] } if not @children.empty? 
-      node_dot    = "#{self.object_id} [label=\"#{(@terminal) ? path : ((@node.nil?) ? "" : @node.join)}\",tooltip=\"#{path}\"#{",style=\"filled\"" if @terminal}]"
+      subtree_dot = @children.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.to_dot(path)}" ] } if not @children.empty? 
+      node_dot    = "#{self.object_id} [label=\"#{((@node.nil?) ? "" : @node.join)}\",tooltip=\"#{path}\"#{",style=\"rounded,filled\"" if @terminal}]"
       return ([ prefix, node_dot, subtree_dot, suffix ].compact.flatten.reject {|r| /^$/.match r}).join(";\n")
    end
 
