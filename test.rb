@@ -29,10 +29,10 @@ end
 
 re_t = "#{prefix.make_re}/?#{suffix.make_re}"
 
-#puts "re: #{re_t}"
-#re =  Regexp.new re_t
-#puts ""
-#
+puts "re: #{re_t}"
+re =  Regexp.new re_t
+puts ""
+
 #test_prefix.each do |p|
 #  test_suffix.each do |s|
 #    test_string = "#{p}/#{s}".gsub(/\.\*/,"X")
@@ -44,4 +44,4 @@ re_t = "#{prefix.make_re}/?#{suffix.make_re}"
 #  end
 #end
 
-puts prefix.make_dot
+#puts prefix.make_dot
