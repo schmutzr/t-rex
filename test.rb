@@ -29,8 +29,8 @@ end
 
 re_t = "#{prefix.to_re}/?#{suffix.to_re}"
 
-#puts "re: #{re_t}"
-#re =  Regexp.new re_t
+puts "re: #{re_t}"
+re =  Regexp.new re_t
 #puts ""
 
 #test_prefix.each do |p|
@@ -44,4 +44,4 @@ re_t = "#{prefix.to_re}/?#{suffix.to_re}"
 #  end
 #end
 
-puts prefix.to_dot
+#puts prefix.to_dot
