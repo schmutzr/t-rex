@@ -61,7 +61,7 @@ A ruby-class and test script to transform list of strings to (exact) /RE/s
         /authservice-changepassword-pext
 
 * via this:
-    <img src="testdata/renodes.svg"></img>
+    !(testdata/renodes.svg))
 
 * into this:
 
