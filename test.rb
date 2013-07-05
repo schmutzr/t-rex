@@ -31,7 +31,7 @@ re_t = "#{prefix.to_re}/?#{suffix.to_re}"
 
 puts "re: #{re_t}"
 re =  Regexp.new re_t
-#puts ""
+puts ""
 
 #test_prefix.each do |p|
 #  test_suffix.each do |s|
