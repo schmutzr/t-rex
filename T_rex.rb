@@ -68,16 +68,16 @@ class T_rex
       (match, rest) = @node.empty? ? [ [], path ] : @node.tr_comparator(path)
       #debug "T_rex::add_child: node=[#{@node.join}], match=[#{match.join}], rest=[#{rest.join}]"
       case true
-	 when ( match.empty? and rest.empty? )      # terminate recursion
-	    debug "### 1"
+	 when ( match.empty? and rest.empty? )
+         # terminate recursion
 	    debug "T_rex::add_child: return self"	
 	    @terminal = true
-	 when ( !rest.empty? and ( @node == match or @node.empty? )) # add child, check for (partially) matching children, delegate
-	    debug "### 2"
+	 when ( !rest.empty? and ( @node == match or @node.empty? ))
+         # add child, check for (partially) matching children, delegate
 	    if @children.empty?
-	       best_matching_child_candidates = []
+	       candidates = []
 	    else
-	       best_matching_child_candidates = @children.collect do |child|
+	       candidates = @children.collect do |child|
 		  #debug "   T_rex::add_child: check child \"#{child.to_s}\""
 		  (m, r) = child.node.tr_comparator rest
 		  child_match_length = m.length
@@ -85,18 +85,20 @@ class T_rex
 		  [ child, child_match_length ] if child_match_length > 0
 	       end
 	    end
-	    best_matching_child_candidates.compact!
-	    if best_matching_child_candidates.empty?
+	    candidates.compact!
+	    if candidates.empty?
+               # no match of rest among children -> new child
 	       debug "T_rex::add_child: CREATE CHILD : parent=\"#{@node.join}\"   [#{rest.join}]"
 	       @children << T_rex.new(rest)
 	    else
-	       #debug "T_rex::add_child: update candidates length=#{best_matching_child_candidates.length} [#{best_matching_child_candidates.to_s}]"
-	       best_matching_child = (best_matching_child_candidates.sort {|a,b| a[1]<=>b[1]})[-1][0]
+	       #debug "T_rex::add_child: update candidates length=#{candidates.length} [#{candidates.to_s}]"
+               # find longest (element/character wise) match of rest among children
+	       best_matching_child = (candidates.sort {|a,b| a[1]<=>b[1]})[-1][0]
 	       debug "T_rex::add_child: UPDATE CHILD : parent=\"#{@node.join}\"   [#{best_matching_child.node.join}] <- [#{rest.join}]"
 	       best_matching_child.add_child rest
 	    end
-	 when @node.length > match.length           # split
-	    debug "### 3"
+	 when @node.length > match.length
+         # split current node, one child inherits all current children, the other equals rest (with no children)
 	    debug "T_rex::add_child: SPLIT        : \"#{@node.join}\" -> \"#{@node[0..(match.length-1)].join}\", children \"#{@node[match.length..-1].join}\" and \"#{rest.join}\""
 	    # "clone" this node with non-matching path
 	    split_child_path = @node[match.length..-1]
