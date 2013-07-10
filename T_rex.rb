@@ -127,16 +127,29 @@ class T_rex
    end
 
    def to_re
-      result = ""
+      subex = ""
       if not @children.empty?
 	 subtree = @children.collect { |child| child.to_re } 
 	 if subtree.length==1 and not @terminal
-	    result = "#{subtree.first}"
+	    subex = "#{subtree.first}"
 	 else
-	    result = "(#{subtree.join("|")})#{"?" if @terminal}"
+	    subex = "(#{subtree.join("|")})#{"?" if @terminal}"
 	 end
       end
-      return "#{@node.join if not @node.nil?}#{result}"
+      return "#{@node.join if not @node.nil?}#{subex}"
+   end
+
+   def compact_suffix(path="")
+      node = "#{@node.join if not @node.nil?}"
+      path = "#{path}#{node}"
+      if !@children.empty? and !@children.nil? # recursion-case
+	 subtree = []
+	 subtree = @children.collect { |child| child.compact_suffix path } # actual recursion
+	 subex   = "(#{(subtree.collect.compact {|s| s[1]}).join("|")})#{"?" if @terminal}"
+	 return [[ path, subex ]].concat subtree
+      else
+	 return [[ path, node ]] # base-case/leaf
+      end
    end
 
    def to_dot(path=nil)
