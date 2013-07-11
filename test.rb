@@ -29,11 +29,11 @@ end
 
 re_t = "#{prefix.to_re}/?#{suffix.to_re}"
 
-puts "re: #{re_t}"
-re =  Regexp.new re_t
-puts ""
+#puts "re: #{re_t}"
+#re =  Regexp.new re_t
+#puts ""
 
-prefix.compact_suffix.each {|p| puts "#{p['path']}\t-> #{p['subex']}" }
+prefix.compact_suffix.each {|p| puts "#{p['path'].join(":")}\t-> #{p['subex']}" }
 
 #test_prefix.each do |p|
 #  test_suffix.each do |s|

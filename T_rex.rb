@@ -139,9 +139,9 @@ class T_rex
       return "#{@node.join if not @node.nil?}#{subex}"
    end
 
-   def compact_suffix(path="")
+   def compact_suffix(path=[])
       node = "#{@node.join if not @node.nil?}"
-      path = "#{path}#{node}"
+      path = path.clone.concat [node]
       if !@children.empty? and !@children.nil? # recursion-case
 	 subtree = (@children.collect { |child| child.compact_suffix path }).flatten # actual recursion
 	 subex   = "#{node}(#{(subtree.collect {|s| s['subex']}).sort.join("|")})#{"?" if @terminal}"
