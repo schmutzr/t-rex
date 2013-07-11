@@ -1,0 +1,5 @@
+./test.rb testdata/renodes | grep -v re: | sort -k3 | uniq -c -f2 | sort -nr | less -S -x36
+./test.rb testdata/renodes | grep -v re: | sort -k3 | less -S -x36
+git push -v --progress -u origin compact_suffix # create branch remote (after creating it local: "git branch compact_suffix")  
+git config --global core.pager less -R
+git config remote.origin.url git@github.com:schmutzr/t-rex.git
