@@ -144,17 +144,10 @@ class T_rex
       path = "#{path}#{node}"
       if !@children.empty? and !@children.nil? # recursion-case
 	 subtree = (@children.collect { |child| child.compact_suffix path }).flatten # actual recursion
-<<<<<<< HEAD
 	 subex   = "#{node}(#{(subtree.collect {|s| s['subex']}).sort.join("|")})#{"?" if @terminal}"
 	 return subtree.flatten.concat [ { 'path'=>path, 'subex'=>subex } ]
       else
 	 return { 'path'=>path, 'subex'=>node } # base-case/leaf
-=======
-	 subex   = "(#{(subtree.collect {|s| s['subex']}).join("|")})#{"?" if @terminal}"
-	 return [{ 'path'=>path, 'subex'=>subex }].concat subtree
-      else
-	 return [{ 'path'=>path, 'subex'=>node }] # base-case/leaf
->>>>>>> 7e8035a71e6d4e24fd49fa9da3171da25c2867dc
       end
    end
 
