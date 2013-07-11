@@ -1,0 +1,20 @@
+ 1216  irb -rT_rex t
+ 1217  %
+ 1218  ./test.rb testdata/renodes | less -S
+ 1219  ./test.rb testdata/renodes | grep -v re: | sort -k3 | less -S -x36
+ 1220  man uniq
+ 1221  ./test.rb testdata/renodes | grep -v re: | sort -k3 | uniq -c -f2 | less -S -x36
+ 1222  %
+ 1223  ./test.rb testdata/renodes | grep -v re: | sort -k3 | uniq -c -f2 | less -S -x36
+ 1224  ./test.rb testdata/renodes | grep -v re: | sort -k3 | uniq -c -f2 | sort -nr | less -S -x36
+ 1225  %3
+ 1226  %
+ 1227  ./test.rb testdata/renodes | grep -v re: | sort -k3 | uniq -c -f2 | sort -nr | less -S -x36
+ 1228  ./test.rb testdata/renodes | grep -v re: | sort -k3 | less -S -x36
+ 1229  %
+ 1230  ./test.rb testdata/renodes | grep -v re: | sort -k3 | less -S -x36
+ 1231  git status
+ 1232  mv t testdata/
+ 1233  git add T_rex.rb test.rb testdata/t
+ 1234  history -10 > testdata/history
+ 1235  history 20 > testdata/history

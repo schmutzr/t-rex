@@ -1,0 +1,7 @@
+t = T_rex.new
+t.add_child "/AAA"
+t.add_child "/ABB"
+t.add_child "/ACC"
+t.add_child "/AAA/images"
+t.add_child "/ACC/images"
+t.compact_suffix

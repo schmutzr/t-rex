@@ -33,7 +33,7 @@ puts "re: #{re_t}"
 re =  Regexp.new re_t
 puts ""
 
-puts (prefix.compact_suffix.collect { |p| puts "#{p[0]} -> #{p[1]}" }).join("\n")
+puts (prefix.compact_suffix.collect { |p| puts "#{p['path']}\t-> #{p['subex']}" }).join("\n")
 
 #test_prefix.each do |p|
 #  test_suffix.each do |s|
