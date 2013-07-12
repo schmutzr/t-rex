@@ -144,7 +144,7 @@ class T_rex
       path = path.clone.concat [node]
       if !@children.empty? and !@children.nil? # recursion-case
 	 subtree = (@children.collect { |child| child.compact_suffix path }).flatten # actual recursion
-	 subex   = "#{node}(#{(subtree.collect {|s| s['subex']}).sort.join("|")})#{"?" if @terminal}"
+	 subex   = "#{node}(#{((subtree.collect {|s| s['subex']}).find_all {|s| "^#{node}".match(s)}).sort.join("|")})#{"?" if @terminal}"
 	 return subtree.flatten.concat [ { 'path'=>path, 'subex'=>subex } ]
       else
 	 return { 'path'=>path, 'subex'=>node } # base-case/leaf
@@ -152,8 +152,7 @@ class T_rex
    end
 
    def to_dot(path=nil)
-      prefix = path.nil? ? [ "digraph {", "edge [arrowtail=\"none\",arrowhead=\"none\"]", "node [shape=\"box\",style=\"rounded\"]" ] : nil
-      suffix = path.nil? ? "}" : nil
+      ( prefix, suffix ) = path.nil? ? [ [ "digraph {", "edge [arrowtail=\"none\",arrowhead=\"none\"]", "node [shape=\"box\",style=\"rounded\"]" ], "}" ] : [ nil, nil ]
       path="#{path}#{@node.join if not @node.nil?}"
       subtree_dot = @children.sort.collect { |child| [ "#{self.object_id} -> #{child.object_id}", "#{child.to_dot(path)}" ] } if not @children.empty? 
       node_dot    = "#{self.object_id} [label=\"#{((@node.nil?) ? "" : @node.join)}\",tooltip=\"#{path}\"#{",style=\"rounded,filled\"" if @terminal}]"
