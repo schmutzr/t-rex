@@ -144,7 +144,8 @@ class T_rex
       path = path.clone.concat [node]
       if !@children.empty? and !@children.nil? # recursion-case
 	 subtree = (@children.collect { |child| child.compact_suffix path }).flatten # actual recursion
-	 subex   = "#{node}(#{((subtree.collect {|s| s['subex']}).find_all {|s| "^#{node}".match(s)}).sort.join("|")})#{"?" if @terminal}"
+	 # subex   = "#{node}(#{((subtree.collect {|s| s['subex']}).find_all {|s| "^#{node}".match(s)}).sort.join("|")})#{"?" if @terminal}"
+	 subex   = "#{node}(#{(subtree.collect {|s| s['subex']}).sort.join("|")})#{"?" if @terminal}"
 	 return subtree.flatten.concat [ { 'path'=>path, 'subex'=>subex } ]
       else
 	 return { 'path'=>path, 'subex'=>node } # base-case/leaf
